@@ -15,6 +15,7 @@
 #include "beep.h" 
 #include "rtc.h" 
 #include "24cxx.h"
+#include "adc.h"
 
 /************************************************
  毕业设计：基于单片机的宠物寄存柜设计
@@ -31,7 +32,7 @@
 	u8 key,t=0;
 //	int u=0;
 	int n=0;//循环读取
-//	u8 p=0;
+	u8 p=0;
 	u8 a=1;
 	u8 b=1;
 	u8 c=1;
@@ -42,6 +43,8 @@
 	u32 Password=0;
 	u8 box[16];
 	u8 BoxN=16;
+	u16 adcx;
+	float temp;
 	
 	delay_init();	    	 //延时函数初始化	  
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
@@ -50,15 +53,16 @@
  	LED_Init();		  			//初始化与LED连接的硬件接口
 	BEEP_Init();         	//初始化蜂鸣器端口
 	KEY_Init();					//初始化按键
-	LCD_Init();			   		//初始化LCD   
+	LCD_Init();			   		//初始化LCD
+	Adc_Init();		  		//ADC初始化
 	AT24CXX_Init();			//IIC初始化 
 	usmart_dev.init(SystemCoreClock/1000000);	//初始化USMART
 	RTC_Init();	  			//RTC初始化
 	W25QXX_Init();				//初始化W25Q128
 	tp_dev.init();
  	my_mem_init(SRAMIN);		//初始化内部内存池
-	exfuns_init();				//为fatfs相关变量申请内存  
- 	f_mount(fs[0],"0:",1); 		//挂载SD卡 
+	exfuns_init();				//为fatfs相关变量申请内存
+ 	f_mount(fs[0],"0:",1); 		//挂载SD卡
  	f_mount(fs[1],"1:",1); 		//挂载FLASH.
 	while(font_init()) 			//检查字库
 	{
@@ -390,7 +394,6 @@ choose:
 			LCD_ShowNum(41,83,calendar.w_year,4,16);									  
 			LCD_ShowNum(81,83,calendar.w_month,2,16);
 			LCD_ShowNum(105,83,calendar.w_date,2,16);
-
 			LCD_ShowNum(133,83,calendar.hour,2,16);									  
 			LCD_ShowNum(157,83,calendar.min,2,16);									  
 			LCD_ShowNum(181,83,calendar.sec,2,16);
@@ -403,13 +406,33 @@ choose:
 				//传感器硬件尚未到位
 			}else LCD_Fill(8,4,200,16,WHITE);
 			
-		
+			if(AT24CXX_ReadOneByte(150)==1)
+			{
+				adcx=Get_Adc_Average(ADC_Channel_1,10);
+				//LCD_ShowxNum(156,130,adcx,4,16,0);//显示ADC的值
+				temp=(float)adcx*(3.3/4096);
+				adcx=temp;
+				LCD_ShowxNum(163,150,adcx,1,16,0);//显示电压值
+				temp-=adcx;
+				temp*=1000;
+				LCD_ShowxNum(172,150,temp,3,16,0X80);
+				if(temp<700)p++;
+				if(p>=1)
+				{
+					while(1);
+					p=0;
+				}//发送紧急短信
+			}
+			
+			
 			key=KEY_Scan(0);
 			if(key==KEY0_PRES)	//KEY0长按,则执行校准程序
 			{
 				LCD_Clear(WHITE);//清屏
 				TP_Adjust();  	//屏幕校准  
 			}
+			
+			
 		}
 		
 		//柜选扫描
@@ -487,7 +510,7 @@ choose:
 					{
 						BEEP=1;
 						goto pwp;
-					}				
+					}
 				}
 				else if(tp_dev.x[0]>60&&tp_dev.x[0]<120 && tp_dev.y[0]>151&&tp_dev.y[0]<200)
 				{//5
@@ -1122,6 +1145,11 @@ bp:
 					AT24CXX_WriteOneByte(BoxN*10+3,calendar.sec);//记住当前时间
 					AT24CXX_WriteOneByte(BoxN*10+2,calendar.min);
 					AT24CXX_WriteOneByte(BoxN*10+1,calendar.hour);
+//					AT24CXX_WriteOneByte(,);
+//					AT24CXX_WriteOneByte(,);
+//					AT24CXX_WriteOneByte(,);
+//					AT24CXX_WriteOneByte(,);
+//					AT24CXX_WriteOneByte(,);
 					
 					HPhone_Number=0;//初始化变量，待下次用
 					Phone_Number=0;
