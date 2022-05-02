@@ -136,8 +136,25 @@ void AT24CXX_Write(u16 WriteAddr,u8 *pBuffer,u16 NumToWrite)
 }
  
 
-
-
+//读取温度数据
+//u8 memread(void) 
+//{ 
+//  start_bit(); 
+//  tx_byte(0xB4);  //Send SlaveAddress ==============================
+//  //tx_byte(0x00); 
+//  tx_byte(0x07);  //Send Command 
+//  //------------ 
+//  start_bit(); 
+//  tx_byte(0x01); 
+//  bit_out=0; 
+//  DataL=rx_byte(); 
+//  bit_out=0; 
+//  DataH=rx_byte(); 
+//  bit_out=1; 
+//  Pecreg=rx_byte(); 
+//  stop_bit(); 
+//  return(DataH*256+DataL); 
+//}
 
 
 

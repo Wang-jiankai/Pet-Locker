@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\FLASH;..\HARDWARE\TOUCH;..\HARDWARE\REMOTE;..\HARDWARE\ADXL345;..\HARDWARE\DS18B20;..\HARDWARE\NRF24L01;..\HARDWARE\SRAM;..\MALLOC;..\HARDWARE\SD;..\FATFS\exfuns;..\FATFS\src;..\USMART;..\FATFS\src\option;..\HARDWARE\SDIO;..\TEXT;..\HARDWARE\W25QXX;..\HARDWARE\BEEP;..\HARDWARE\RTC</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\FLASH;..\HARDWARE\TOUCH;..\HARDWARE\REMOTE;..\HARDWARE\ADXL345;..\HARDWARE\DS18B20;..\HARDWARE\NRF24L01;..\HARDWARE\SRAM;..\MALLOC;..\HARDWARE\SD;..\FATFS\exfuns;..\FATFS\src;..\USMART;..\FATFS\src\option;..\HARDWARE\SDIO;..\TEXT;..\HARDWARE\W25QXX;..\HARDWARE\BEEP;..\HARDWARE\RTC;..\HARDWARE\GY-906;..\HARDWARE\TIMER;..\SIM900A;..\HARDWARE\USART3</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -507,6 +507,16 @@
               <FileName>adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\ADC\adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\USART3\usart3.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -697,6 +707,16 @@
               <FileName>README.TXT</FileName>
               <FileType>5</FileType>
               <FilePath>..\README.TXT</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>SIM900A</GroupName>
+          <Files>
+            <File>
+              <FileName>sim900a.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SIM900A\sim900a.c</FilePath>
             </File>
           </Files>
         </Group>

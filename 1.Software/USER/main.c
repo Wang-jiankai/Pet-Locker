@@ -16,6 +16,8 @@
 #include "rtc.h" 
 #include "24cxx.h"
 #include "adc.h"
+#include "usart3.h"
+#include "sim900a.h" 
 
 /************************************************
  毕业设计：基于单片机的宠物寄存柜设计
@@ -58,6 +60,7 @@
 	AT24CXX_Init();			//IIC初始化 
 	usmart_dev.init(SystemCoreClock/1000000);	//初始化USMART
 	RTC_Init();	  			//RTC初始化
+	usart3_init(115200);		//初始化串口3
 	W25QXX_Init();				//初始化W25Q128
 	tp_dev.init();
  	my_mem_init(SRAMIN);		//初始化内部内存池
@@ -353,7 +356,7 @@ choose:
 		if(box[14]==0)
 		{
 			BACK_COLOR=GREEN;
-			LCD_Fill(122,253,178,316,GREEN);	
+			LCD_Fill(122,253,178,316,GREEN);
 		}
 		else 
 		{
@@ -364,38 +367,39 @@ choose:
 		if(box[15]==0)
 		{
 			BACK_COLOR=GREEN;
-			LCD_Fill(182,253,236,316,GREEN);	
+			LCD_Fill(182,253,236,316,GREEN);
 		}
 		else 
 		{
 			BACK_COLOR=RED;
 			LCD_Fill(182,253,236,316,RED);
 		}	
-		LCD_ShowString(219,253,20,20,16,"16");	
+		LCD_ShowString(219,253,20,20,16,"16");
 		
 		POINT_COLOR=BLUE;
 		BACK_COLOR=WHITE;
 		if(box[0]==0 || box[1]==0 || box[2]==0 || box[3]==0 || box[4]==0 || box[5]==0 || box[6]==0 || box[7]==0 || box[8]==0 || box[9]==0 || box[10]==0 || box[11]==0 || box[12]==0 || box[13]==0 || box[14]==0 || box[15]==0)
 			Show_Str_Mid(0,47,"请选择寄存柜",24,240);
 		else Show_Str_Mid(0,47,"抱歉，寄存柜已满",24,240);
-
+		
 		
 		
 		
 	while(c)
 	{//柜位选择等待状态（首页）
-
-
+		
+		
+		
 		//界面显示
-		POINT_COLOR=RED;							    
+		POINT_COLOR=RED;
 		if(t!=calendar.sec)	   //更新时间	
 		{
 			t=calendar.sec;
-			LCD_ShowNum(41,83,calendar.w_year,4,16);									  
+			LCD_ShowNum(41,83,calendar.w_year,4,16);
 			LCD_ShowNum(81,83,calendar.w_month,2,16);
 			LCD_ShowNum(105,83,calendar.w_date,2,16);
-			LCD_ShowNum(133,83,calendar.hour,2,16);									  
-			LCD_ShowNum(157,83,calendar.min,2,16);									  
+			LCD_ShowNum(133,83,calendar.hour,2,16);
+			LCD_ShowNum(157,83,calendar.min,2,16);  
 			LCD_ShowNum(181,83,calendar.sec,2,16);
 			LED0=!LED0;
 			POINT_COLOR=BRRED;
@@ -406,7 +410,7 @@ choose:
 				//传感器硬件尚未到位
 			}else LCD_Fill(8,4,200,16,WHITE);
 			
-			if(AT24CXX_ReadOneByte(150)==1)
+			if(AT24CXX_ReadOneByte(150)==1)//若16号柜已存，进行叫声监测
 			{
 				adcx=Get_Adc_Average(ADC_Channel_1,10);
 				//LCD_ShowxNum(156,130,adcx,4,16,0);//显示ADC的值
@@ -416,11 +420,14 @@ choose:
 				temp-=adcx;
 				temp*=1000;
 				LCD_ShowxNum(172,150,temp,3,16,0X80);
-				if(temp<700)p++;
-				if(p>=1)
+				if(temp<700 || adcx<2)p++;
+				if(p>=2)
 				{
-					while(1);
+					//while(1);
 					p=0;
+					
+					
+					
 				}//发送紧急短信
 			}
 			
@@ -429,7 +436,7 @@ choose:
 			if(key==KEY0_PRES)	//KEY0长按,则执行校准程序
 			{
 				LCD_Clear(WHITE);//清屏
-				TP_Adjust();  	//屏幕校准  
+				TP_Adjust();  	//屏幕校准
 			}
 			
 			
@@ -437,7 +444,7 @@ choose:
 		
 		//柜选扫描
 		tp_dev.scan(0);
-		if(tp_dev.sta & TP_PRES_DOWN)			
+		if(tp_dev.sta & TP_PRES_DOWN)
 		{//触摸屏检测
 		 	if(tp_dev.x[0]<lcddev.width && tp_dev.y[0]<lcddev.height)
 			{
