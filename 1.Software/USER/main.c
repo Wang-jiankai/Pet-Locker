@@ -46,6 +46,18 @@
 	u8 box[16];
 	u8 BoxN=16;
 	u16 adcx;
+	
+	 //SIM相关
+//	u8 *p,*p1,*p2;
+//	u8 phonebuf[20]; 		//号码缓存
+//	u8 pohnenumlen=0;		//号码长度,最大15个数
+//	u8 timex=0;
+//	u8 key=0;
+//	u8 smssendsta=0;		//短信发送状态,0,等待发送;1,发送失败;2,发送成功
+//	p=mymalloc(SRAMIN,100);	//申请100个字节的内存,用于存放电话号码的unicode字符串
+//	p1=mymalloc(SRAMIN,300);//申请300个字节的内存,用于存放短信的unicode字符串
+//	p2=mymalloc(SRAMIN,100);//申请100个字节的内存 存放：AT+CMGS=p1
+	
 	float temp;
 	
 	delay_init();	    	 //延时函数初始化	  
@@ -179,6 +191,7 @@ choose:
 //		for(BoxN=0;BoxN<16;BoxN++)box[BoxN]=1;//测试红颜色柜状态色填充
 
 		POINT_COLOR=BLACK;
+	
 //		for(n=0;n<16;n++)//调试，柜存信息EEPROM全部改空
 //		{
 //			AT24CXX_WriteOneByte(10*n+0,0);
@@ -187,7 +200,12 @@ choose:
 //			AT24CXX_WriteOneByte(n*10+3,0);
 //			AT24CXX_WriteOneByte(n*10+4,0);
 //			AT24CXX_WriteOneByte(n*10+5,0);
+//			AT24CXX_WriteOneByte(n*10+6,0);
+//			AT24CXX_WriteOneByte(n*10+7,0);
+//			AT24CXX_WriteOneByte(n*10+8,0);
+//			AT24CXX_WriteOneByte(n*10+9,0);
 //		}
+
 		for(n=0;n<16;n++)box[n]=AT24CXX_ReadOneByte(10*n);//从EEPROM中调取空置情况
 		if(box[0]==0)
 		{
@@ -381,6 +399,15 @@ choose:
 		if(box[0]==0 || box[1]==0 || box[2]==0 || box[3]==0 || box[4]==0 || box[5]==0 || box[6]==0 || box[7]==0 || box[8]==0 || box[9]==0 || box[10]==0 || box[11]==0 || box[12]==0 || box[13]==0 || box[14]==0 || box[15]==0)
 			Show_Str_Mid(0,47,"请选择寄存柜",24,240);
 		else Show_Str_Mid(0,47,"抱歉，寄存柜已满",24,240);
+		
+		//SIM短消息设置
+//		if(sim900a_send_cmd("AT+CMGF=1","OK",200))return 1;			//设置文本模式 
+//		if(sim900a_send_cmd("AT+CSCS=\"UCS2\"","OK",200))return 2;	//设置TE字符集为UCS2 
+//		if(sim900a_send_cmd("AT+CSMP=17,0,2,25","OK",200))return 3;	//设置短消息文本模式参数 
+		
+		
+		
+		
 		
 		
 		
@@ -832,7 +859,7 @@ choose:
 						BEEP=1;a=1;c=1;
 						goto choose;//随后delay_ms(200);BEEP=0;
 					}
-pnum://回到输入密码状态
+pnum://回到号码输入状态
 					BEEP=1;
 					if(Phone_Number!=0)
 					{
@@ -898,16 +925,16 @@ pwp:
 	LCD_Clear(WHITE);
 	POINT_COLOR=RED;
 	Show_Str_Mid(0,23,"基于单片机的宠物寄存柜设计",16,240);
-	LCD_ShowString(41,83,200,16,16,"    -  -  ");	//显示时间
-	LCD_ShowString(133,83,200,16,16,"  :  :  ");
-	LCD_ShowNum(41,83,calendar.w_year,4,16);									  
-	LCD_ShowNum(81,83,calendar.w_month,2,16);
-	LCD_ShowNum(105,83,calendar.w_date,2,16);
-	LCD_ShowNum(133,83,calendar.hour,2,16);									  
-	LCD_ShowNum(157,83,calendar.min,2,16);									  
-	LCD_ShowNum(181,83,calendar.sec,2,16);
+	LCD_ShowString(41,89,200,16,16,"    -  -  ");	//显示时间
+	LCD_ShowString(133,89,200,16,16,"  :  :  ");
+	LCD_ShowNum(41,89,calendar.w_year,4,16);									  
+	LCD_ShowNum(81,89,calendar.w_month,2,16);
+	LCD_ShowNum(105,89,calendar.w_date,2,16);
+	LCD_ShowNum(133,89,calendar.hour,2,16);									  
+	LCD_ShowNum(157,89,calendar.min,2,16);									  
+	LCD_ShowNum(181,89,calendar.sec,2,16);
 	POINT_COLOR=MAGENTA;	
-	Show_Str_Mid(0,47,"请输入密码",24,240);
+	Show_Str_Mid(0,45,"请输入密码",24,240);
 	Show_Str_Mid(0,107,"触击屏幕，逐位输入",16,240);
 	POINT_COLOR=BROWN;
 	Show_Str(26,183,40,24,"1",24,0);			//键盘布局
@@ -932,10 +959,19 @@ pwp:
 	LCD_Fill(119,170,121,320,GRAY);
 	LCD_Fill(179,170,181,320,GRAY);
 	LCD_Fill(237,126,240,320,GRAY);
+	
+	//调试时告知密码
 	POINT_COLOR=RED;
-	LCD_ShowNum(209,0,AT24CXX_ReadOneByte(BoxN*10+4),2,12);//调试时告知密码
+	LCD_ShowNum(209,0,AT24CXX_ReadOneByte(BoxN*10+4),2,12);
 	LCD_ShowNum(221,0,AT24CXX_ReadOneByte(BoxN*10+5),2,12);
-
+	//告知用户该笼电话号
+	POINT_COLOR=BRRED;
+	Phone_Number=AT24CXX_ReadOneByte(BoxN*10+6)*1000000+AT24CXX_ReadOneByte(BoxN*10+7)*10000+AT24CXX_ReadOneByte(BoxN*10+8)*100+AT24CXX_ReadOneByte(BoxN*10+9);
+	Show_Str(35,72,80,16,"接收号码：",16,0);
+	LCD_ShowNum(137,72,Phone_Number,8,16);//显示号码
+	LCD_ShowNum(113,72,AT24CXX_ReadOneByte(BoxN+160),3,16);//显示号段
+	Phone_Number=0;
+	
 	}
 	while(e)
 	{//密码输入状态（次页）
@@ -943,13 +979,13 @@ pwp:
 		if(t!=calendar.sec)					   //更新时间	
 		{
 			t=calendar.sec;
-			LCD_ShowNum(41,83,calendar.w_year,4,16);									  
-			LCD_ShowNum(81,83,calendar.w_month,2,16);
-			LCD_ShowNum(105,83,calendar.w_date,2,16);
+			LCD_ShowNum(41,89,calendar.w_year,4,16);									  
+			LCD_ShowNum(81,89,calendar.w_month,2,16);
+			LCD_ShowNum(105,89,calendar.w_date,2,16);
 
-			LCD_ShowNum(133,83,calendar.hour,2,16);									  
-			LCD_ShowNum(157,83,calendar.min,2,16);									  
-			LCD_ShowNum(181,83,calendar.sec,2,16);
+			LCD_ShowNum(133,89,calendar.hour,2,16);									  
+			LCD_ShowNum(157,89,calendar.min,2,16);									  
+			LCD_ShowNum(181,89,calendar.sec,2,16);
 			LED0=!LED0;
 			POINT_COLOR=BRRED;
 			if(LED0==1)
@@ -1044,7 +1080,7 @@ pwp:
 				}
 				
 				//BEEP=0;//消噪调试
-				
+				//if密码正确
 				if(Password == AT24CXX_ReadOneByte(BoxN*10+4)*100+AT24CXX_ReadOneByte(BoxN*10+5))//密码正确，终止当前输入循环，
 				{
 					Password=0;
@@ -1069,6 +1105,12 @@ pwp:
 					cost=(dis_sec+60*dis_min+3600*dis_hour)/5;
 					LCD_ShowNum(80,196,cost,3,24);
 					Show_Str_Mid(127,196,"元",24,24);
+					POINT_COLOR=BRRED;
+					Phone_Number=AT24CXX_ReadOneByte(BoxN*10+6)*1000000+AT24CXX_ReadOneByte(BoxN*10+7)*10000+AT24CXX_ReadOneByte(BoxN*10+8)*100+AT24CXX_ReadOneByte(BoxN*10+9);
+					Show_Str(29,240,96,16,"客户手机号：",16,0);
+					LCD_ShowNum(143,240,Phone_Number,8,16);//显示号码
+					LCD_ShowNum(119,240,AT24CXX_ReadOneByte(BoxN+160),3,16);//显示号段
+
 					//打开门
 					AT24CXX_WriteOneByte(BoxN*10,0);//释放该柜
 					AT24CXX_WriteOneByte(BoxN*10+1,00);//释放时间标签
@@ -1076,16 +1118,23 @@ pwp:
 					AT24CXX_WriteOneByte(BoxN*10+3,00);
 					AT24CXX_WriteOneByte(BoxN*10+4,00);//释放随机密码
 					AT24CXX_WriteOneByte(BoxN*10+5,00);
-//					AT24CXX_WriteOneByte(160+BoxN,00);//释放号段
-//					AT24CXX_WriteOneByte(BoxN*10+6,00);//释放电话号				
-//					AT24CXX_WriteOneByte(BoxN*10+7,00);//释放指纹 
+					AT24CXX_WriteOneByte(BoxN+160,00);//释放号段
+					AT24CXX_WriteOneByte(BoxN*10+6,00);//释放电话号
+					AT24CXX_WriteOneByte(BoxN*10+7,00);
+					AT24CXX_WriteOneByte(BoxN*10+8,00);
+					AT24CXX_WriteOneByte(BoxN*10+9,00);					
+//					AT24CXX_WriteOneByte(BoxN*10+7,00);//释放指纹 空间不足
 					box[BoxN]=0;
 					BoxN=16;
+					Phone_Number=0;
 					delay_ms(600);
 					BEEP=0;
 					delay_ms(700);
 					a=1;b=1;c=1;
-//					while(1);
+					tp_dev.scan(0);
+					while(!(tp_dev.sta & TP_PRES_DOWN))tp_dev.scan(0);
+					BEEP=1;
+					// && (tp_dev.x[0]<lcddev.width && tp_dev.y[0]<lcddev.height)
 					goto choose;					
 					
 				}
@@ -1143,7 +1192,12 @@ bp:
 					LCD_ShowNum(209,0,AT24CXX_ReadOneByte(BoxN*10+4),2,12);//调试时提示密码
 					LCD_ShowNum(221,0,AT24CXX_ReadOneByte(BoxN*10+5),2,12);	
 					
-					//发送取回密码短信，硬件未到位			
+					//发送取回密码短信
+					
+					
+					
+					
+					
 					
 					POINT_COLOR=BLUE;
 					Show_Str_Mid(0,147,"取回密码短信已发送",24,240);
@@ -1152,11 +1206,11 @@ bp:
 					AT24CXX_WriteOneByte(BoxN*10+3,calendar.sec);//记住当前时间
 					AT24CXX_WriteOneByte(BoxN*10+2,calendar.min);
 					AT24CXX_WriteOneByte(BoxN*10+1,calendar.hour);
-//					AT24CXX_WriteOneByte(,);
-//					AT24CXX_WriteOneByte(,);
-//					AT24CXX_WriteOneByte(,);
-//					AT24CXX_WriteOneByte(,);
-//					AT24CXX_WriteOneByte(,);
+					AT24CXX_WriteOneByte(BoxN*10+6,Phone_Number/1000000);//记住电话号
+					AT24CXX_WriteOneByte(BoxN*10+7,(Phone_Number%1000000)/10000);
+					AT24CXX_WriteOneByte(BoxN*10+8,(Phone_Number%10000)/100);
+					AT24CXX_WriteOneByte(BoxN*10+9,Phone_Number%100);
+					AT24CXX_WriteOneByte(BoxN+160,HPhone_Number);//记住电话号前三位
 					
 					HPhone_Number=0;//初始化变量，待下次用
 					Phone_Number=0;
