@@ -18,6 +18,7 @@
 #include "adc.h"
 #include "usart3.h"
 #include "sim900a.h" 
+//#include "string.h"
 
 /************************************************
  毕业设计：基于单片机的宠物寄存柜设计
@@ -33,32 +34,32 @@
 
 	u8 key,t=0;
 //	int u=0;
-	int n=0;//循环读取
-	u8 p=0;
+	int n=0;//循环读取EEPROM
+	u16 dB_sec16=900;
 	u8 a=1;
 	u8 b=1;
 	u8 c=1;
 	u8 e=1;
 	u32 HPhone_Number=0;
 	u32 Phone_Number=0;
+
 	u8 dis_hour,dis_min,dis_sec,cost;
 	u32 Password=0;
 	u8 box[16];
 	u8 BoxN=16;
 	u16 adcx;
+	float temp;	
+	const u8* sim900a_test16_msg="尊敬的顾客您好，目前您寄存在16号宠物寄存笼的宠物连续嚎叫，请前往现场处理！";
+	const u8* sim900a_pw_msg="尊敬的顾客您好，感谢您的使用宠物寄存服务，您的密码是";
 	
-	 //SIM相关
-//	u8 *p,*p1,*p2;
-//	u8 phonebuf[20]; 		//号码缓存
+	//SIM相关
+	u8 *p,*p1,*p2;
+	u8 phonebuf[20]; 		//号码缓存
 //	u8 pohnenumlen=0;		//号码长度,最大15个数
-//	u8 timex=0;
-//	u8 key=0;
-//	u8 smssendsta=0;		//短信发送状态,0,等待发送;1,发送失败;2,发送成功
-//	p=mymalloc(SRAMIN,100);	//申请100个字节的内存,用于存放电话号码的unicode字符串
-//	p1=mymalloc(SRAMIN,300);//申请300个字节的内存,用于存放短信的unicode字符串
-//	p2=mymalloc(SRAMIN,100);//申请100个字节的内存 存放：AT+CMGS=p1
-	
-	float temp;
+	u8 smssendsta=0;		//短信发送状态,0,等待发送;1,发送失败;2,发送成功
+	p=mymalloc(SRAMIN,100);	//申请100个字节的内存,用于存放电话号码的unicode字符串
+	p1=mymalloc(SRAMIN,300);//申请300个字节的内存,用于存放短信的unicode字符串
+	p2=mymalloc(SRAMIN,100);//申请100个字节的内存 存放：AT+CMGS=p1
 	
 	delay_init();	    	 //延时函数初始化	  
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
@@ -154,9 +155,10 @@ choose:
 //			}
 //		}
 //	}
-//24C02测试
+
+	//24C02测试
 //	for(n=0;n<16;)
-//		{
+//	{
 //		delay_ms(500);
 //		AT24CXX_WriteOneByte(n*10+4,rand() % 90 + 10);
 //		AT24CXX_WriteOneByte(n*10+5,rand() % 90 + 10);
@@ -174,241 +176,238 @@ choose:
 //	}
 	
 	
-	}	
-		
-		LCD_Fill(0,107,240,109,GRAY);
-		LCD_Fill(0,150,240,152,GRAY);
-		LCD_Fill(0,200,240,202,GRAY);
-		LCD_Fill(0,250,240,252,GRAY);
-		LCD_Fill(0,317,240,320,GRAY);
 
-		LCD_Fill(0,107,2,320,GRAY);
-		LCD_Fill(59,107,61,320,GRAY);
-		LCD_Fill(119,107,121,320,GRAY);
-		LCD_Fill(179,107,181,320,GRAY);
-		LCD_Fill(237,107,240,320,GRAY);	
 		
-//		for(BoxN=0;BoxN<16;BoxN++)box[BoxN]=1;//测试红颜色柜状态色填充
+	LCD_Fill(0,107,240,109,GRAY);
+	LCD_Fill(0,150,240,152,GRAY);
+	LCD_Fill(0,200,240,202,GRAY);
+	LCD_Fill(0,250,240,252,GRAY);
+	LCD_Fill(0,317,240,320,GRAY);
 
-		POINT_COLOR=BLACK;
+	LCD_Fill(0,107,2,320,GRAY);
+	LCD_Fill(59,107,61,320,GRAY);
+	LCD_Fill(119,107,121,320,GRAY);
+	LCD_Fill(179,107,181,320,GRAY);
+	LCD_Fill(237,107,240,320,GRAY);	
+		
+//	for(BoxN=0;BoxN<16;BoxN++)box[BoxN]=1;//测试红颜色柜状态色填充
+
+	POINT_COLOR=BLACK;
 	
-//		for(n=0;n<16;n++)//调试，柜存信息EEPROM全部改空
-//		{
-//			AT24CXX_WriteOneByte(10*n+0,0);
-//			AT24CXX_WriteOneByte(10*n+1,0);
-//			AT24CXX_WriteOneByte(n*10+2,0);
-//			AT24CXX_WriteOneByte(n*10+3,0);
-//			AT24CXX_WriteOneByte(n*10+4,0);
-//			AT24CXX_WriteOneByte(n*10+5,0);
-//			AT24CXX_WriteOneByte(n*10+6,0);
-//			AT24CXX_WriteOneByte(n*10+7,0);
-//			AT24CXX_WriteOneByte(n*10+8,0);
-//			AT24CXX_WriteOneByte(n*10+9,0);
-//		}
-
-		for(n=0;n<16;n++)box[n]=AT24CXX_ReadOneByte(10*n);//从EEPROM中调取空置情况
-		if(box[0]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(3,110,58,149,GREEN);
-		}
-		else
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(3,110,58,149,RED);
-		}
-		LCD_ShowString(41,110,20,20,16,"01");//每格柜右上加编号
-											//感谢黄成老师提出宝贵意见
-		if(box[1]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(62,110,118,149,GREEN);
-		}
-		else
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(62,110,118,149,RED);
-		}
-		LCD_ShowString(101,110,20,20,16,"02");
-		if(box[2]==0)
-		{
-						BACK_COLOR=GREEN;
-			LCD_Fill(122,110,178,149,GREEN);
-		}
-		else
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(122,110,178,149,RED);	
-		}
-		LCD_ShowString(162,110,20,20,16,"03");
-		if(box[3]==0)
-		{			
-			BACK_COLOR=GREEN;
-			LCD_Fill(182,110,236,149,GREEN);
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(182,110,236,149,RED);
-		}
-		LCD_ShowString(219,110,20,20,16,"04");
-		
-		//第二行
-		if(box[4]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(3,153,58,199,GREEN);	
-		}
-		else
-		{	
-			BACK_COLOR=RED;		
-			LCD_Fill(3,153,58,199,RED);	
-		}
-		LCD_ShowString(41,153,20,20,16,"05");
-		if(box[5]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(62,153,118,199,GREEN);	
-		}
-		else 
-		{	
-			BACK_COLOR=RED;
-			LCD_Fill(62,153,118,199,RED);
-		}
-		LCD_ShowString(101,153,20,20,16,"06");
-		if(box[6]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(122,153,178,199,GREEN);	
-		}
-		else 
-		{	
-			BACK_COLOR=RED;
-			LCD_Fill(122,153,178,199,RED);
-		}
-		LCD_ShowString(162,153,20,20,16,"07");
-		if(box[7]==0)
-		{		
-			BACK_COLOR=GREEN;
-			LCD_Fill(182,153,236,199,GREEN);	
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(182,153,236,199,RED);	
-		}
-		LCD_ShowString(219,153,20,20,16,"08");
-		
-		
-		
-		//第三行
-		if(box[8]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(3,203,58,249,GREEN);	
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(3,203,58,249,RED);
-		}
-		LCD_ShowString(41,203,20,20,16,"09");
-		if(box[9]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(62,203,118,249,GREEN);
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(62,203,118,249,RED);
-		}
-		LCD_ShowString(101,203,20,20,16,"10");
-		if(box[10]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(122,203,178,249,GREEN);	
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(122,203,178,249,RED);
-		}
-		LCD_ShowString(162,203,20,20,16,"11");
-		if(box[11]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(182,203,236,249,GREEN);
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(182,203,236,249,RED);
-		}
-		LCD_ShowString(219,203,20,20,16,"12");
-		
-		
-		//第四行
-		if(box[12]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(3,253,58,316,GREEN);	
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(3,253,58,316,RED);
-		}
-		LCD_ShowString(41,253,20,20,16,"13");
-		if(box[13]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(62,253,118,316,GREEN);	
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(62,253,118,316,RED);
-		}
-		LCD_ShowString(101,253,20,20,16,"14");
-		if(box[14]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(122,253,178,316,GREEN);
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(122,253,178,316,RED);
-		}
-		LCD_ShowString(162,253,20,20,16,"15");
-		if(box[15]==0)
-		{
-			BACK_COLOR=GREEN;
-			LCD_Fill(182,253,236,316,GREEN);
-		}
-		else 
-		{
-			BACK_COLOR=RED;
-			LCD_Fill(182,253,236,316,RED);
-		}	
-		LCD_ShowString(219,253,20,20,16,"16");
-		
-		POINT_COLOR=BLUE;
-		BACK_COLOR=WHITE;
-		if(box[0]==0 || box[1]==0 || box[2]==0 || box[3]==0 || box[4]==0 || box[5]==0 || box[6]==0 || box[7]==0 || box[8]==0 || box[9]==0 || box[10]==0 || box[11]==0 || box[12]==0 || box[13]==0 || box[14]==0 || box[15]==0)
-			Show_Str_Mid(0,47,"请选择寄存柜",24,240);
-		else Show_Str_Mid(0,47,"抱歉，寄存柜已满",24,240);
-		
-		//SIM短消息设置
-//		if(sim900a_send_cmd("AT+CMGF=1","OK",200))return 1;			//设置文本模式 
-//		if(sim900a_send_cmd("AT+CSCS=\"UCS2\"","OK",200))return 2;	//设置TE字符集为UCS2 
-//		if(sim900a_send_cmd("AT+CSMP=17,0,2,25","OK",200))return 3;	//设置短消息文本模式参数 
+//	for(n=0;n<16;n++)//调试，柜存信息EEPROM全部改空
+//	{
+//		AT24CXX_WriteOneByte(10*n+0,0);
+//		AT24CXX_WriteOneByte(10*n+1,0);
+//		AT24CXX_WriteOneByte(n*10+2,0);
+//		AT24CXX_WriteOneByte(n*10+3,0);
+//		AT24CXX_WriteOneByte(n*10+4,0);
+//		AT24CXX_WriteOneByte(n*10+5,0);
+//		AT24CXX_WriteOneByte(n*10+6,0);
+//		AT24CXX_WriteOneByte(n*10+7,0);
+//		AT24CXX_WriteOneByte(n*10+8,0);
+//		AT24CXX_WriteOneByte(n*10+9,0);
+//	}
+	
+	//从EEPROM中调取空置情况
+	for(n=0;n<16;n++)box[n]=AT24CXX_ReadOneByte(10*n);
+	if(box[0]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(3,110,58,149,GREEN);
+	}
+	else
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(3,110,58,149,RED);
+	}
+	LCD_ShowString(41,110,20,20,16,"01");//每格柜右上加编号
+										//感谢黄成老师提出宝贵意见
+	if(box[1]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(62,110,118,149,GREEN);
+	}
+	else
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(62,110,118,149,RED);
+	}
+	LCD_ShowString(101,110,20,20,16,"02");
+	if(box[2]==0)
+	{
+					BACK_COLOR=GREEN;
+		LCD_Fill(122,110,178,149,GREEN);
+	}
+	else
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(122,110,178,149,RED);	
+	}
+	LCD_ShowString(162,110,20,20,16,"03");
+	if(box[3]==0)
+	{			
+		BACK_COLOR=GREEN;
+		LCD_Fill(182,110,236,149,GREEN);
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(182,110,236,149,RED);
+	}
+	LCD_ShowString(219,110,20,20,16,"04");
+	
+	//第二行
+	if(box[4]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(3,153,58,199,GREEN);	
+	}
+	else
+	{	
+		BACK_COLOR=RED;		
+		LCD_Fill(3,153,58,199,RED);	
+	}
+	LCD_ShowString(41,153,20,20,16,"05");
+	if(box[5]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(62,153,118,199,GREEN);	
+	}
+	else 
+	{	
+		BACK_COLOR=RED;
+		LCD_Fill(62,153,118,199,RED);
+	}
+	LCD_ShowString(101,153,20,20,16,"06");
+	if(box[6]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(122,153,178,199,GREEN);	
+	}
+	else 
+	{	
+		BACK_COLOR=RED;
+		LCD_Fill(122,153,178,199,RED);
+	}
+	LCD_ShowString(162,153,20,20,16,"07");
+	if(box[7]==0)
+	{		
+		BACK_COLOR=GREEN;
+		LCD_Fill(182,153,236,199,GREEN);	
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(182,153,236,199,RED);	
+	}
+	LCD_ShowString(219,153,20,20,16,"08");
+	
+	
+	
+	//第三行
+	if(box[8]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(3,203,58,249,GREEN);	
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(3,203,58,249,RED);
+	}
+	LCD_ShowString(41,203,20,20,16,"09");
+	if(box[9]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(62,203,118,249,GREEN);
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(62,203,118,249,RED);
+	}
+	LCD_ShowString(101,203,20,20,16,"10");
+	if(box[10]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(122,203,178,249,GREEN);	
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(122,203,178,249,RED);
+	}
+	LCD_ShowString(162,203,20,20,16,"11");
+	if(box[11]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(182,203,236,249,GREEN);
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(182,203,236,249,RED);
+	}
+	LCD_ShowString(219,203,20,20,16,"12");
+	
+	
+	//第四行
+	if(box[12]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(3,253,58,316,GREEN);	
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(3,253,58,316,RED);
+	}
+	LCD_ShowString(41,253,20,20,16,"13");
+	if(box[13]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(62,253,118,316,GREEN);	
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(62,253,118,316,RED);
+	}
+	LCD_ShowString(101,253,20,20,16,"14");
+	if(box[14]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(122,253,178,316,GREEN);
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(122,253,178,316,RED);
+	}
+	LCD_ShowString(162,253,20,20,16,"15");
+	if(box[15]==0)
+	{
+		BACK_COLOR=GREEN;
+		LCD_Fill(182,253,236,316,GREEN);
+	}
+	else 
+	{
+		BACK_COLOR=RED;
+		LCD_Fill(182,253,236,316,RED);
+	}	
+	LCD_ShowString(219,253,20,20,16,"16");
+	
+	POINT_COLOR=BLUE;
+	BACK_COLOR=WHITE;
+	if(box[0]==0 || box[1]==0 || box[2]==0 || box[3]==0 || box[4]==0 || box[5]==0 || box[6]==0 || box[7]==0 || box[8]==0 || box[9]==0 || box[10]==0 || box[11]==0 || box[12]==0 || box[13]==0 || box[14]==0 || box[15]==0)
+		Show_Str_Mid(0,47,"请选择寄存柜",24,240);
+	else Show_Str_Mid(0,47,"抱歉，寄存柜已满",24,240);
+}	
+	
 		
 		
 		
-		
-		
+	
 		
 		
 		
@@ -447,15 +446,81 @@ choose:
 				temp-=adcx;
 				temp*=1000;
 				LCD_ShowxNum(172,150,temp,3,16,0X80);
-				if(temp<700 || adcx<2)p++;
-				if(p>=2)
+				if(temp<600 || adcx<2)dB_sec16++;
+				if(dB_sec16>=902)
 				{
 					//while(1);
-					p=0;
+					dB_sec16=0;
+					BoxN=15;
 					
+					//发送紧急短信
+					while(sim900a_send_cmd("AT","OK",100))//检测是否应答AT指令 
+					{
+						LED0=!LED0;
+						delay_ms(100);  
+					}
+					sim_at_response(1);///重要
+					if(sim900a_send_cmd("AT+CMGF=1","OK",200))return 1;			//设置文本模式 
+					if(sim900a_send_cmd("AT+CSCS=\"UCS2\"","OK",200))return 2;	//设置TE字符集为UCS2 
+					if(sim900a_send_cmd("AT+CSMP=17,0,2,25","OK",200))return 3;	//设置短消息文本模式参数
 					
+					if(smssendsta)
+					{
+						smssendsta=0;
+						Show_Str(30+40,70,170,90,"等待发送",16,0);//显示状态
+					}
+					//号码转换到数组
+					HPhone_Number=AT24CXX_ReadOneByte(BoxN+160);
+					Phone_Number=AT24CXX_ReadOneByte(BoxN*10+6)*1000000+AT24CXX_ReadOneByte(BoxN*10+7)*10000+AT24CXX_ReadOneByte(BoxN*10+8)*100+AT24CXX_ReadOneByte(BoxN*10+9);
+					phonebuf[2]=sim900a_hex2chr(HPhone_Number%10);
+					phonebuf[1]=sim900a_hex2chr((HPhone_Number%100)/10);
+					phonebuf[0]=sim900a_hex2chr(HPhone_Number/100);
+					phonebuf[10]=sim900a_hex2chr(Phone_Number%10);
+					phonebuf[9]=sim900a_hex2chr((Phone_Number%100)/10);
+					phonebuf[8]=sim900a_hex2chr((Phone_Number%1000)/100);
+					phonebuf[7]=sim900a_hex2chr((Phone_Number%10000)/1000);
+					phonebuf[6]=sim900a_hex2chr((Phone_Number%100000)/10000);
+					phonebuf[5]=sim900a_hex2chr((Phone_Number%1000000)/100000);
+					phonebuf[4]=sim900a_hex2chr((Phone_Number%10000000)/1000000);
+					phonebuf[3]=sim900a_hex2chr(Phone_Number/10000000);									
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(HPhone_Number/100));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((HPhone_Number%100)/10));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(HPhone_Number%10));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(Phone_Number/10000000));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%10000000)/1000000));									
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%1000000)/100000));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%100000)/10000));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%10000)/1000));		
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%1000)/100));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%100)/10));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(Phone_Number%10));
 					
-				}//发送紧急短信
+					Show_Str(30+40,70,170,90,"正在发送",16,0);			//显示正在发送		
+					smssendsta=1;		 
+					sim900a_unigbk_exchange(phonebuf,p,1);				//将电话号码转换为unicode字符串
+					sim900a_unigbk_exchange((u8*)sim900a_test16_msg,p1,1);//将短信内容转换为unicode字符串.
+					sprintf((char*)p2,"AT+CMGS=\"%s\"",p); 
+					if(sim900a_send_cmd(p2,">",200)==0)					//发送短信命令+电话号码
+					{ 		 				 													 
+						u3_printf("%s",p1);		 						//发送短信内容到GSM模块 
+						if(sim900a_send_cmd((u8*)0X1A,"+CMGS:",1000)==0)smssendsta=2;//发送结束符,等待发送完成(最长等待10秒钟,因为短信长了的话,等待时间会长一些)
+					}
+					LCD_Clear(WHITE);
+					POINT_COLOR=BLUE;					
+					if(smssendsta==1)Show_Str_Mid(0,147,"告警短信发送失败",24,240);	//显示状态
+					else Show_Str_Mid(0,147,"告警短信已发送",24,240);
+					USART3_RX_STA=0;
+					delay_ms(10);
+					if(USART3_RX_STA&0X8000)sim_at_response(1);//检查从GSM模块接收到的数据 
+					
+					BEEP=1;
+					delay_ms(200);
+					goto choose;
+//					myfree(SRAMIN,p);//释放内存
+//					myfree(SRAMIN,p1);
+//					myfree(SRAMIN,p2); 
+					
+				}
 			}
 			
 			
@@ -720,7 +785,7 @@ choose:
 	
 	
 	
-	
+	//
 	{//号码输入界面
 	POINT_COLOR=RED;
 	Show_Str_Mid(0,23,"基于单片机的宠物寄存柜设计",16,240);
@@ -960,7 +1025,7 @@ pwp:
 	LCD_Fill(179,170,181,320,GRAY);
 	LCD_Fill(237,126,240,320,GRAY);
 	
-	//调试时告知密码
+	//调试时提示密码
 	POINT_COLOR=RED;
 	LCD_ShowNum(209,0,AT24CXX_ReadOneByte(BoxN*10+4),2,12);
 	LCD_ShowNum(221,0,AT24CXX_ReadOneByte(BoxN*10+5),2,12);
@@ -1171,9 +1236,9 @@ bp:
 			{				
 				if(tp_dev.x[0]>180&&tp_dev.x[0]<240 && tp_dev.y[0]>170&&tp_dev.y[0]<220)
 				{//确定按钮
-					BEEP=1;
+					BEEP=1;	
 					//BEEP=0;//消噪调试
-					//显示发送界面					
+					//显示发送界面
 					LCD_Clear(WHITE);
 					POINT_COLOR=RED;
 					LCD_ShowString(41,83,200,16,16,"    -  -  ");
@@ -1183,24 +1248,81 @@ bp:
 					LCD_ShowNum(81,83,calendar.w_month,2,16);
 					LCD_ShowNum(105,83,calendar.w_date,2,16);
 					LCD_ShowNum(133,83,calendar.hour,2,16);									  
-					LCD_ShowNum(157,83,calendar.min,2,16);									  
+					LCD_ShowNum(157,83,calendar.min,2,16);
 					LCD_ShowNum(181,83,calendar.sec,2,16);
 					
 					//生成随机密码，并存入
 					AT24CXX_WriteOneByte(BoxN*10+4,rand() % 90 + 10);
 					AT24CXX_WriteOneByte(BoxN*10+5,rand() % 90 + 10);
 					LCD_ShowNum(209,0,AT24CXX_ReadOneByte(BoxN*10+4),2,12);//调试时提示密码
-					LCD_ShowNum(221,0,AT24CXX_ReadOneByte(BoxN*10+5),2,12);	
+					LCD_ShowNum(221,0,AT24CXX_ReadOneByte(BoxN*10+5),2,12);
 					
-					//发送取回密码短信
+//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+4)/10));
+//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+4)%10));
+//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+5)/10));
+//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+5)%10));
 					
+		////////////发送取回密码短信
+					while(sim900a_send_cmd("AT","OK",100))//检测是否应答AT指令 
+					{
+						LED0=!LED0;
+						delay_ms(100);  
+					}
+					sim_at_response(1);///重要
+					if(sim900a_send_cmd("AT+CMGF=1","OK",200))return 1;			//设置文本模式 
+					if(sim900a_send_cmd("AT+CSCS=\"UCS2\"","OK",200))return 2;	//设置TE字符集为UCS2 
+					if(sim900a_send_cmd("AT+CSMP=17,0,2,25","OK",200))return 3;	//设置短消息文本模式参数
 					
+					if(smssendsta)
+					{
+						smssendsta=0;
+						Show_Str(30+40,70,170,90,"等待发送",16,0);//显示状态
+					}
+					//号码转换到数组
+					phonebuf[2]=sim900a_hex2chr(HPhone_Number%10);
+					phonebuf[1]=sim900a_hex2chr((HPhone_Number%100)/10);
+					phonebuf[0]=sim900a_hex2chr(HPhone_Number/100);
+					phonebuf[10]=sim900a_hex2chr(Phone_Number%10);
+					phonebuf[9]=sim900a_hex2chr((Phone_Number%100)/10);
+					phonebuf[8]=sim900a_hex2chr((Phone_Number%1000)/100);
+					phonebuf[7]=sim900a_hex2chr((Phone_Number%10000)/1000);
+					phonebuf[6]=sim900a_hex2chr((Phone_Number%100000)/10000);
+					phonebuf[5]=sim900a_hex2chr((Phone_Number%1000000)/100000);
+					phonebuf[4]=sim900a_hex2chr((Phone_Number%10000000)/1000000);
+					phonebuf[3]=sim900a_hex2chr(Phone_Number/10000000);									
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(HPhone_Number/100));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((HPhone_Number%100)/10));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(HPhone_Number%10));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(Phone_Number/10000000));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%10000000)/1000000));									
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%1000000)/100000));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%100000)/10000));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%10000)/1000));		
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%1000)/100));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((Phone_Number%100)/10));
+					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(Phone_Number%10));
 					
-					
-					
-					
-					POINT_COLOR=BLUE;
-					Show_Str_Mid(0,147,"取回密码短信已发送",24,240);
+					Show_Str_Mid(0,147,"正在发送",24,240);			//显示正在发送		
+					smssendsta=1;		 
+					sim900a_unigbk_exchange(phonebuf,p,1);				//将电话号码转换为unicode字符串
+					sim900a_unigbk_exchange((u8*)sim900a_pw_msg,p1,1);//将短信内容转换为unicode字符串.
+					sprintf((char*)p2,"AT+CMGS=\"%s\"",p); 
+					if(sim900a_send_cmd(p2,">",200)==0)					//发送短信命令+电话号码
+					{ 		 				 													 
+						u3_printf("%s",p1);		 						//发送短信内容到GSM模块 
+						if(sim900a_send_cmd((u8*)0X1A,"+CMGS:",1000)==0)smssendsta=2;//发送结束符,等待发送完成(最长等待10秒钟,因为短信长了的话,等待时间会长一些)
+					}
+					LCD_Clear(WHITE);
+					POINT_COLOR=BLUE;					
+					if(smssendsta==1)Show_Str_Mid(0,147,"短信发送失败",24,240);	//显示状态
+					else Show_Str_Mid(0,147,"取回密码短信已发送",24,240);
+					USART3_RX_STA=0;
+					delay_ms(10);
+					if(USART3_RX_STA&0X8000)sim_at_response(1);//检查从GSM模块接收到的数据 
+
+//					myfree(SRAMIN,p);//释放内存
+//					myfree(SRAMIN,p1);
+//					myfree(SRAMIN,p2); 
 					
 					AT24CXX_WriteOneByte(BoxN*10+0,1);//当前柜已有宠物 标志位存入EEPROM
 					AT24CXX_WriteOneByte(BoxN*10+3,calendar.sec);//记住当前时间
@@ -1223,6 +1345,9 @@ bp:
 					delay_ms(700);
 					a=1;b=1;c=1;
 					//while(1);
+//					tp_dev.scan(0);
+//					while(!(tp_dev.sta & TP_PRES_DOWN))tp_dev.scan(0);
+					BEEP=1;
 					break;
 					
 				}
@@ -1236,18 +1361,7 @@ bp:
 			}
 		}else delay_ms(10);	//没有按键按下的时候
 	
-	
-	
-	
-	
-	
-	
-	
-	
 	}
-	
-	
-	
 	
 }
 

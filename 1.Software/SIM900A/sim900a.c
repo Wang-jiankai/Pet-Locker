@@ -145,12 +145,12 @@ void sim900a_unigbk_exchange(u8 *src,u8 *dst,u8 mode)
  			temp=(u16)ff_convert((WCHAR)*(u16*)buf,0);
 			if(temp<0X80){*dst=temp;dst++;}
 			else {*(u16*)dst=swap16(temp);dst+=2;}
-		} 
+		}
 	}
 	*dst=0;//添加结束符
 } 
 //键盘码表
-const u8* kbd_tbl1[13]={"1","2","3","4","5","6","7","8","9","*","0","#","DEL"};
+const u8* kbd_tbl1[13]={"1","2","3","4","5","6","7","8","9","0","*","#","DEL"};
 const u8* kbd_tbl2[13]={"1","2","3","4","5","6","7","8","9",".","0","#","DEL"};
 u8** kbd_tbl;
 u8* kbd_fn_tbl[2];
@@ -503,8 +503,9 @@ void sim900a_sms_read_test(void)
 //短信发送内容(70个字[UCS2的时候,1个字符/数字都算1个字])
 const u8* sim900a_test_msg="尊敬的顾客您好，目前您寄存在16号宠物寄存笼的宠物连续嚎叫，请前往现场处理！";
 
+
 //SIM900A发短信测试 
-void sim900a_sms_send_test(void)
+void sim900a_sms_send_test()
 {
 	u8 *p,*p1,*p2;
 	u8 phonebuf[20]; 		//号码缓存
@@ -540,7 +541,7 @@ void sim900a_sms_send_test(void)
 			if(key<10||key==11)
 			{
 				if(pohnenumlen<15)
-				{ 
+				{
 					phonebuf[pohnenumlen++]=kbd_tbl[key-1][0];
 					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",kbd_tbl[key-1][0]); 
 				}
@@ -578,6 +579,7 @@ void sim900a_sms_send_test(void)
 	myfree(SRAMIN,p1);
 	myfree(SRAMIN,p2); 
 }
+
 //sms测试主界面
 void sim900a_sms_ui(u16 x,u16 y)
 { 
