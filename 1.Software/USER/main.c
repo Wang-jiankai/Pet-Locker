@@ -26,7 +26,7 @@
  技术支持：www.openedv.com
  作者：王建凯
  指导教师：施一飞副教授
- 版本号：2.0_Preview
+ 版本号：2.4_Preview
 ************************************************/
 
  int main(void)
@@ -48,7 +48,10 @@
 	u8 box[16];
 	u8 BoxN=16;
 	u16 adcx;
-	float temp;	
+	float temp;
+	 u16 temp1=0;
+//	 u8 temp_num=0;
+	 u16 temp_arr[20];
 	const u8* sim900a_test16_msg="尊敬的顾客您好，目前您寄存在16号宠物寄存笼的宠物连续嚎叫，请前往现场处理！";
 	const u8* sim900a_pw_msg="尊敬的顾客您好，感谢您的使用宠物寄存服务，您的密码是";
 	
@@ -404,13 +407,13 @@ choose:
 	else Show_Str_Mid(0,47,"抱歉，寄存柜已满",24,240);
 }	
 	
-		
-		
-		
 	
-		
-		
-		
+	
+	
+	
+	
+	
+	
 	while(c)
 	{//柜位选择等待状态（首页）
 		
@@ -436,17 +439,56 @@ choose:
 				//传感器硬件尚未到位
 			}else LCD_Fill(8,4,200,16,WHITE);
 			
-			if(AT24CXX_ReadOneByte(150)==1)//若16号柜已存，进行叫声监测
+			if(AT24CXX_ReadOneByte(150)==1)//若16号柜已存
 			{
+				//进行叫声监测
 				adcx=Get_Adc_Average(ADC_Channel_1,10);
 				//LCD_ShowxNum(156,130,adcx,4,16,0);//显示ADC的值
 				temp=(float)adcx*(3.3/4096);
 				adcx=temp;
-				LCD_ShowxNum(163,150,adcx,1,16,0);//显示电压值
+				LCD_ShowxNum(164,150,adcx,1,16,0);//显示电压值
 				temp-=adcx;
 				temp*=1000;
 				LCD_ShowxNum(172,150,temp,3,16,0X80);
 				if(temp<600 || adcx<2)dB_sec16++;
+				
+				
+				//体温检测
+				while(1)
+				{
+				temp_arr[0]=memread();delay_ms(1);
+				temp_arr[1]=memread();delay_ms(1);
+				temp_arr[2]=memread();delay_ms(1);
+				temp_arr[3]=memread();delay_ms(1);
+				temp_arr[4]=memread();delay_ms(1);
+				temp_arr[5]=memread();delay_ms(1);
+				temp_arr[6]=memread();delay_ms(1);
+				temp_arr[7]=memread();delay_ms(1);
+				temp_arr[8]=memread();delay_ms(1);
+				temp_arr[9]=memread();delay_ms(1);
+				temp_arr[10]=memread();delay_ms(1);
+				temp_arr[11]=memread();delay_ms(1);
+				temp_arr[12]=memread();delay_ms(1);
+				temp_arr[13]=memread();delay_ms(1);
+				temp_arr[14]=memread();delay_ms(1);
+				temp_arr[15]=memread();delay_ms(1);
+				temp_arr[16]=memread();delay_ms(1);
+				temp_arr[17]=memread();delay_ms(1);
+				temp_arr[18]=memread();delay_ms(1);
+				temp_arr[19]=memread();delay_ms(1);
+				temp1=(temp_arr[0]+temp_arr[1]+temp_arr[2]+temp_arr[3]+temp_arr[4]+temp_arr[5]+temp_arr[6]+temp_arr[7]+temp_arr[8]+temp_arr[9]+temp_arr[10]+temp_arr[11]+temp_arr[12]+temp_arr[13]+temp_arr[14]+temp_arr[15]+temp_arr[16]+temp_arr[17]+temp_arr[18]+temp_arr[19])/20;
+				temp1=temp1*2-27315;
+				LED0=!LED0;
+				if(temp1<5000 && temp1>1000)break;
+				}
+				LCD_ShowxNum(212,290,temp1/100,2,16,0X80);
+				
+				
+				
+				
+				
+				
+				//判定短信是否发送
 				if(dB_sec16>=902)
 				{
 					//while(1);
@@ -457,7 +499,7 @@ choose:
 					while(sim900a_send_cmd("AT","OK",100))//检测是否应答AT指令 
 					{
 						LED0=!LED0;
-						delay_ms(100);  
+						delay_ms(100);
 					}
 					sim_at_response(1);///重要
 					if(sim900a_send_cmd("AT+CMGF=1","OK",200))return 1;			//设置文本模式 
@@ -508,7 +550,8 @@ choose:
 					LCD_Clear(WHITE);
 					POINT_COLOR=BLUE;					
 					if(smssendsta==1)Show_Str_Mid(0,147,"告警短信发送失败",24,240);	//显示状态
-					else Show_Str_Mid(0,147,"告警短信已发送",24,240);
+					else 
+					Show_Str_Mid(0,147,"告警短信已发送",24,240);
 					USART3_RX_STA=0;
 					delay_ms(10);
 					if(USART3_RX_STA&0X8000)sim_at_response(1);//检查从GSM模块接收到的数据 
@@ -767,7 +810,6 @@ choose:
 						goto pwp;
 					}
 				}
-				
 				//消噪调试↓
 				delay_ms(250);
 				if(BEEP==1)	
@@ -964,7 +1006,7 @@ pnum://回到号码输入状态
 					BEEP=1;
 					LCD_ShowNum(88,136,Phone_Number,8,24);
 				}
-				//BEEP=0;//消噪调试
+				BEEP=0;//消噪调试
 				if(Phone_Number>0x98967F)//电话号输满，终止当前输入循环，准备发送短信
 				{
 					a=0;b=1;goto bp;
@@ -1144,13 +1186,13 @@ pwp:
 					LCD_ShowNum(88,136,Password,8,24);
 				}
 				
-				//BEEP=0;//消噪调试
+				BEEP=0;//消噪调试
 				//if密码正确
 				if(Password == AT24CXX_ReadOneByte(BoxN*10+4)*100+AT24CXX_ReadOneByte(BoxN*10+5))//密码正确，终止当前输入循环，
 				{
 					Password=0;
-					//消噪调试
-					BEEP=1;
+					//消噪调试BEEP=1;
+					
 					//显示发送界面					
 					LCD_Clear(WHITE);
 					t=calendar.sec;			//计算使用时间并计费显示
@@ -1237,7 +1279,7 @@ bp:
 				if(tp_dev.x[0]>180&&tp_dev.x[0]<240 && tp_dev.y[0]>170&&tp_dev.y[0]<220)
 				{//确定按钮
 					BEEP=1;	
-					//BEEP=0;//消噪调试
+					BEEP=0;//消噪调试
 					//显示发送界面
 					LCD_Clear(WHITE);
 					POINT_COLOR=RED;
@@ -1314,7 +1356,8 @@ bp:
 					}
 					LCD_Clear(WHITE);
 					POINT_COLOR=BLUE;					
-					if(smssendsta==1)Show_Str_Mid(0,147,"短信发送失败",24,240);	//显示状态
+					if(smssendsta==1)
+					Show_Str_Mid(0,147,"短信发送失败",24,240);	//显示状态
 					else Show_Str_Mid(0,147,"取回密码短信已发送",24,240);
 					USART3_RX_STA=0;
 					delay_ms(10);
@@ -1340,14 +1383,14 @@ bp:
 					box[BoxN]=1;
 					BoxN=16;
 					
-					delay_ms(600);
+					delay_ms(6000);
 					BEEP=0;
 					delay_ms(700);
 					a=1;b=1;c=1;
-					//while(1);
+//					while(1);
 //					tp_dev.scan(0);
 //					while(!(tp_dev.sta & TP_PRES_DOWN))tp_dev.scan(0);
-					BEEP=1;
+//					BEEP=1;
 					break;
 					
 				}

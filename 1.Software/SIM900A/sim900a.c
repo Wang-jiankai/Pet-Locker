@@ -150,7 +150,7 @@ void sim900a_unigbk_exchange(u8 *src,u8 *dst,u8 mode)
 	*dst=0;//添加结束符
 } 
 //键盘码表
-const u8* kbd_tbl1[13]={"1","2","3","4","5","6","7","8","9","0","*","#","DEL"};
+const u8* kbd_tbl1[13]={"1","2","3","4","5","6","7","8","9","*","0","#","DEL"};
 const u8* kbd_tbl2[13]={"1","2","3","4","5","6","7","8","9",".","0","#","DEL"};
 u8** kbd_tbl;
 u8* kbd_fn_tbl[2];
@@ -505,7 +505,7 @@ const u8* sim900a_test_msg="尊敬的顾客您好，目前您寄存在16号宠物寄存笼的宠物连续
 
 
 //SIM900A发短信测试 
-void sim900a_sms_send_test()
+void sim900a_sms_send_test(void)
 {
 	u8 *p,*p1,*p2;
 	u8 phonebuf[20]; 		//号码缓存

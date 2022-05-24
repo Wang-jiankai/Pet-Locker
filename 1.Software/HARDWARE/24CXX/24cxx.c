@@ -29,7 +29,8 @@ u8 AT24CXX_ReadOneByte(u16 ReadAddr)
 
 	IIC_Wait_Ack(); 
     IIC_Send_Byte(ReadAddr%256);   //发送低地址
-	IIC_Wait_Ack();	    
+	IIC_Wait_Ack();
+	
 	IIC_Start();  	 	   
 	IIC_Send_Byte(0XA1);           //进入接收模式			   
 	IIC_Wait_Ack();	 
@@ -41,7 +42,7 @@ u8 AT24CXX_ReadOneByte(u16 ReadAddr)
 //WriteAddr  :写入数据的目的地址    
 //DataToWrite:要写入的数据
 void AT24CXX_WriteOneByte(u16 WriteAddr,u8 DataToWrite)
-{				   	  	    																 
+{
     IIC_Start();  
 	if(EE_TYPE>AT24C16)
 	{
@@ -137,24 +138,32 @@ void AT24CXX_Write(u16 WriteAddr,u8 *pBuffer,u16 NumToWrite)
  
 
 //读取温度数据
-//u8 memread(void) 
-//{ 
-//  start_bit(); 
-//  tx_byte(0xB4);  //Send SlaveAddress ==============================
-//  //tx_byte(0x00); 
-//  tx_byte(0x07);  //Send Command 
-//  //------------ 
-//  start_bit(); 
-//  tx_byte(0x01); 
-//  bit_out=0; 
-//  DataL=rx_byte(); 
-//  bit_out=0; 
-//  DataH=rx_byte(); 
-//  bit_out=1; 
-//  Pecreg=rx_byte(); 
-//  stop_bit(); 
-//  return(DataH*256+DataL); 
-//}
+u16 memread(void) 
+{ 
+  u8 DataH,DataL,Pecreg; 
+  IIC_Start();
+  IIC_Send_Byte(0xB4);  //Send SlaveAddress
+//IIC_Send_Byte(0x00);
+  IIC_Wait_Ack();
+  IIC_Send_Byte(0x07);  //Send Command 
+  //------------ 
+  IIC_Wait_Ack();
+
+  IIC_Start(); 
+  IIC_Send_Byte(0xB5); 
+  IIC_Wait_Ack();	   
+  DataL=IIC_Read_Byte(0); 
+  IIC_Wait_Ack(); 
+  DataH=IIC_Read_Byte(0); 
+  IIC_Wait_Ack();
+  Pecreg=IIC_Read_Byte(0); 
+  IIC_Stop();
+  return(DataH*256+DataL); 
+}
+
+
+
+
 
 
 
