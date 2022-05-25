@@ -18,6 +18,7 @@
 #include "adc.h"
 #include "usart3.h"
 #include "sim900a.h" 
+#include  "stdio.h"
 //#include "string.h"
 
 /************************************************
@@ -26,7 +27,7 @@
  技术支持：www.openedv.com
  作者：王建凯
  指导教师：施一飞副教授
- 版本号：2.4_Preview
+ 版本号：3.0_Full_Version
 ************************************************/
 
  int main(void)
@@ -35,7 +36,8 @@
 	u8 key,t=0;
 //	int u=0;
 	int n=0;//循环读取EEPROM
-	u16 dB_sec16=900;
+	u16 dB_sec16=600;
+	u16 Temp_sec16=600;
 	u8 a=1;
 	u8 b=1;
 	u8 c=1;
@@ -49,11 +51,12 @@
 	u8 BoxN=16;
 	u16 adcx;
 	float temp;
+	 u8 pw_txt[100];//存储密码短信
 	 u16 temp1=0;
-//	 u8 temp_num=0;
 	 u16 temp_arr[20];
 	const u8* sim900a_test16_msg="尊敬的顾客您好，目前您寄存在16号宠物寄存笼的宠物连续嚎叫，请前往现场处理！";
-	const u8* sim900a_pw_msg="尊敬的顾客您好，感谢您的使用宠物寄存服务，您的密码是";
+	const u8* sim900a_pw_msg="尊敬的顾客您好，感谢您使用宠物寄存服务，您的密码是";
+	u16 sim900a_pw;
 	
 	//SIM相关
 	u8 *p,*p1,*p2;
@@ -117,7 +120,7 @@
 	
 	{//基础显示界面
 	//box[15]=1;
-	//goto start;//跳过延时
+//	goto start;//跳过延时,直接调试
 	
 choose:
 	if(BEEP==1)
@@ -432,7 +435,7 @@ choose:
 			LCD_ShowNum(181,83,calendar.sec,2,16);
 			LED0=!LED0;
 			POINT_COLOR=BRRED;
-			if(LED0==1)
+			if(calendar.sec%2==1)
 			{
 				if(box[0]==1 || box[1]==1 || box[2]==1 || box[3]==1 || box[4]==1 || box[5]==1 || box[6]==1 || box[7]==1 || box[8]==1 || box[9]==1 || box[10]==1 || box[11]==1 || box[12]==1 || box[13]==1 || box[14]==1 || box[15]==1)
 				Show_Str_Mid(8,4,"宠物健康状况检测中...",12,240);
@@ -441,16 +444,28 @@ choose:
 			
 			if(AT24CXX_ReadOneByte(150)==1)//若16号柜已存
 			{
+				
 				//进行叫声监测
 				adcx=Get_Adc_Average(ADC_Channel_1,10);
 				//LCD_ShowxNum(156,130,adcx,4,16,0);//显示ADC的值
 				temp=(float)adcx*(3.3/4096);
 				adcx=temp;
-				LCD_ShowxNum(164,150,adcx,1,16,0);//显示电压值
+				POINT_COLOR=0xFFFF;
+				BACK_COLOR=RED;
+				LCD_ShowxNum(186,272,adcx,1,16,0);//显示电压值
 				temp-=adcx;
 				temp*=1000;
-				LCD_ShowxNum(172,150,temp,3,16,0X80);
-				if(temp<600 || adcx<2)dB_sec16++;
+				LCD_ShowxNum(194,272,temp,3,16,0X80);
+				Show_Str(218,272,20,20,"mV",16,1);
+				POINT_COLOR=0x0000;
+				BACK_COLOR=0xFFFF;
+				if(dB_sec16<600)dB_sec16++;
+				else
+				{
+					if(temp<600 && adcx<=2)dB_sec16++;
+					else dB_sec16--;
+				}
+				
 				
 				
 				//体温检测
@@ -481,18 +496,27 @@ choose:
 				LED0=!LED0;
 				if(temp1<5000 && temp1>1000)break;
 				}
-				LCD_ShowxNum(212,290,temp1/100,2,16,0X80);
-				
-				
-				
+				POINT_COLOR=0xFFFF;
+				BACK_COLOR=RED;
+				LCD_ShowxNum(195,290,temp1/100,2,16,0X80);
+				Show_Str(211,290,20,20,"℃",16,1);
+				POINT_COLOR=0x0000;
+				BACK_COLOR=0xFFFF;
+				if(Temp_sec16<600)Temp_sec16++;
+				else
+				{
+					if(temp1>3200)Temp_sec16++;
+					else Temp_sec16--;
+				}
 				
 				
 				
 				//判定短信是否发送
-				if(dB_sec16>=902)
+				if(dB_sec16>=603 || Temp_sec16>=605)
 				{
 					//while(1);
 					dB_sec16=0;
+					Temp_sec16=0;
 					BoxN=15;
 					
 					//发送紧急短信
@@ -1191,8 +1215,8 @@ pwp:
 				if(Password == AT24CXX_ReadOneByte(BoxN*10+4)*100+AT24CXX_ReadOneByte(BoxN*10+5))//密码正确，终止当前输入循环，
 				{
 					Password=0;
-					//消噪调试BEEP=1;
-					
+					//消噪调试
+					BEEP=1;
 					//显示发送界面					
 					LCD_Clear(WHITE);
 					t=calendar.sec;			//计算使用时间并计费显示
@@ -1219,6 +1243,9 @@ pwp:
 					LCD_ShowNum(119,240,AT24CXX_ReadOneByte(BoxN+160),3,16);//显示号段
 
 					//打开门
+					LED1=0;
+					delay_ms(100);
+					LED1=1;
 					AT24CXX_WriteOneByte(BoxN*10,0);//释放该柜
 					AT24CXX_WriteOneByte(BoxN*10+1,00);//释放时间标签
 					AT24CXX_WriteOneByte(BoxN*10+2,00);
@@ -1279,7 +1306,7 @@ bp:
 				if(tp_dev.x[0]>180&&tp_dev.x[0]<240 && tp_dev.y[0]>170&&tp_dev.y[0]<220)
 				{//确定按钮
 					BEEP=1;	
-					BEEP=0;//消噪调试
+					//消噪调试BEEP=0;
 					//显示发送界面
 					LCD_Clear(WHITE);
 					POINT_COLOR=RED;
@@ -1292,17 +1319,20 @@ bp:
 					LCD_ShowNum(133,83,calendar.hour,2,16);									  
 					LCD_ShowNum(157,83,calendar.min,2,16);
 					LCD_ShowNum(181,83,calendar.sec,2,16);
-					
+
 					//生成随机密码，并存入
 					AT24CXX_WriteOneByte(BoxN*10+4,rand() % 90 + 10);
 					AT24CXX_WriteOneByte(BoxN*10+5,rand() % 90 + 10);
 					LCD_ShowNum(209,0,AT24CXX_ReadOneByte(BoxN*10+4),2,12);//调试时提示密码
 					LCD_ShowNum(221,0,AT24CXX_ReadOneByte(BoxN*10+5),2,12);
+					sim900a_pw=AT24CXX_ReadOneByte(BoxN*10+4)*100+AT24CXX_ReadOneByte(BoxN*10+5);
+					sprintf(pw_txt,"%s%d",sim900a_pw_msg,(u16)sim900a_pw);
+//					Show_Str(30+40,90,170,90,(u8*)pw_txt,16,0);
 					
-//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+4)/10));
-//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+4)%10));
-//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+5)/10));
-//					strcat((char*)sim900a_pw_msg,(char*)sim900a_hex2chr(AT24CXX_ReadOneByte(BoxN*10+5)%10));
+					//开门动作
+					LED1=0;
+					delay_ms(100);
+					LED1=1;
 					
 		////////////发送取回密码短信
 					while(sim900a_send_cmd("AT","OK",100))//检测是否应答AT指令 
@@ -1331,7 +1361,7 @@ bp:
 					phonebuf[6]=sim900a_hex2chr((Phone_Number%100000)/10000);
 					phonebuf[5]=sim900a_hex2chr((Phone_Number%1000000)/100000);
 					phonebuf[4]=sim900a_hex2chr((Phone_Number%10000000)/1000000);
-					phonebuf[3]=sim900a_hex2chr(Phone_Number/10000000);									
+					phonebuf[3]=sim900a_hex2chr(Phone_Number/10000000);					
 					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(HPhone_Number/100));
 					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr((HPhone_Number%100)/10));
 					u3_printf("AT+CLDTMF=2,\"%c\"\r\n",sim900a_hex2chr(HPhone_Number%10));
@@ -1347,7 +1377,7 @@ bp:
 					Show_Str_Mid(0,147,"正在发送",24,240);			//显示正在发送		
 					smssendsta=1;		 
 					sim900a_unigbk_exchange(phonebuf,p,1);				//将电话号码转换为unicode字符串
-					sim900a_unigbk_exchange((u8*)sim900a_pw_msg,p1,1);//将短信内容转换为unicode字符串.
+					sim900a_unigbk_exchange((u8*)pw_txt,p1,1);//将短信内容转换为unicode字符串.
 					sprintf((char*)p2,"AT+CMGS=\"%s\"",p); 
 					if(sim900a_send_cmd(p2,">",200)==0)					//发送短信命令+电话号码
 					{ 		 				 													 
@@ -1355,7 +1385,7 @@ bp:
 						if(sim900a_send_cmd((u8*)0X1A,"+CMGS:",1000)==0)smssendsta=2;//发送结束符,等待发送完成(最长等待10秒钟,因为短信长了的话,等待时间会长一些)
 					}
 					LCD_Clear(WHITE);
-					POINT_COLOR=BLUE;					
+					POINT_COLOR=BLUE;
 					if(smssendsta==1)
 					Show_Str_Mid(0,147,"短信发送失败",24,240);	//显示状态
 					else Show_Str_Mid(0,147,"取回密码短信已发送",24,240);
@@ -1411,41 +1441,6 @@ bp:
 
 
 
-
-
-
-
-//	u32 fontcnt;		  
-//	u8 i,j;
-//	u8 fontx[2];//gbk码
-//	while(1)
-//	{
-//		fontcnt=0;
-//		for(i=0x81;i<0xff;i++)
-//		{		
-//			fontx[0]=i;
-//			LCD_ShowNum(118,150,i,3,16);		//显示内码高字节    
-//			for(j=0x40;j<0xfe;j++)
-//			{
-//				if(j==0x7f)continue;
-//				fontcnt++;
-//				LCD_ShowNum(118,170,j,3,16);	//显示内码低字节	 
-//				LCD_ShowNum(118,190,fontcnt,5,16);//汉字计数显示	 
-//			 	fontx[1]=j;
-//				Show_Font(30+132,220,fontx,24,0);	  
-//				Show_Font(30+144,244,fontx,16,0);	  		 		 
-//				Show_Font(30+108,260,fontx,12,0);	  		 		 
-//				t=200;
-//				while(t--)//延时,同时扫描按键；更新字库
-//				{
-//					delay_ms(1);
-//					key=KEY_Scan(0);
-//					if(key==KEY0_PRES)goto UPD;
-//				}
-//				LED0=!LED0;
-//			}   
-//		}	
-//	}
 
  
 }
