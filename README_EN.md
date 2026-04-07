@@ -33,7 +33,7 @@ As pet-friendly outings become more common, many venues restrict pet entry. This
 
 ## 📦 Software
 
-**Source:** `Software/`
+**Source:** `1.Software/`
 
 System status screens:
 
@@ -49,7 +49,7 @@ System status screens:
 
 Based on **STM32F1 Elite Development Board** + **2.8" TFTLCD** + **SIM900A** module.
 
-Hardware resources in `Hardware/` — schematics, dimension drawings, and wiring diagrams.
+Hardware resources in `2.Hardware/` — schematics, dimension drawings, and wiring diagrams.
 
 ---
 
@@ -84,14 +84,10 @@ MDK 5.14.0.0
 
 ```
 Pet-Locker/
-├── 2.Hardware/              # Hardware resources
-├── 3.0_Full_Version/       # Latest full version
-├── 2.4_Preview/            # v2.4 preview
-├── 2.3_Preview/            # v2.3 preview
-├── 2.2_Preview/            # v2.2 preview
-├── 2.1_Preview/            # v2.1 preview
-├── 2.0_Preview/            # v2.0 preview
-└── Software/               # Firmware source
+├── 1.Software/             # Firmware source
+├── 2.Hardware/             # Hardware resources (schematics, wiring diagrams)
+├── README.md               # Chinese version
+└── README_EN.md            # English version
 ```
 
 ---
