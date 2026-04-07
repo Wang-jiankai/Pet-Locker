@@ -33,7 +33,7 @@
 
 ## 📦 软件
 
-**源码位置：** `Software/`
+**源码位置：** `1.Software/`
 
 系统状态界面：
 
@@ -49,7 +49,7 @@
 
 基于**正点原子 STM32F1 精英开发板** + **2.8 寸 TFTLCD** + **SIM900A** 等模块。
 
-硬件资料：`Hardware/` 目录包含各模块原理图、尺寸图及整体连接图。
+硬件资料：`2.Hardware/` 目录包含各模块原理图、尺寸图及整体连接图。
 
 ---
 
@@ -84,14 +84,10 @@ MDK 5.14.0.0
 
 ```
 Pet-Locker/
-├── 2.Hardware/              # 硬件资料（原理图、连接图）
-├── 3.0_Full_Version/       # 最新完整版本
-├── 2.4_Preview/            # 2.4 预览版
-├── 2.3_Preview/            # 2.3 预览版
-├── 2.2_Preview/            # 2.2 预览版
-├── 2.1_Preview/            # 2.1 预览版
-├── 2.0_Preview/            # 2.0 预览版
-└── Software/              # 软件工程源码
+├── 1.Software/             # 软件工程源码
+├── 2.Hardware/             # 硬件资料（原理图、连接图）
+├── README.md               # 中文版
+└── README_EN.md            # English version
 ```
 
 ---
